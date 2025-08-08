@@ -1,0 +1,2 @@
+# mangareader
+Desktop Manga Reader
