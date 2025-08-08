@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions; 
 
-namespace csreader
+namespace mangareader.Forms
 {
   public class FormMain : Form
   {
@@ -94,7 +94,7 @@ namespace csreader
       var match = Regex.Match(fileName, @"\d+");
       return match.Success ? int.Parse(match.Value) : 0;
     }
-    private void BtnRead_click(object sender, EventArgs e)
+    private void BtnRead_click(object? sender, EventArgs e)
     {
       if (imageFiles == null || imageFiles.Length == 0)
       {

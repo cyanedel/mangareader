@@ -1,4 +1,4 @@
-namespace csreader
+namespace mangareader.Forms
 {
   public class FormRead : Form
   {
