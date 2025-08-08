@@ -1,9 +1,10 @@
-using System.Text.RegularExpressions; 
+using mangareader.Utils;
 
 namespace mangareader.Forms
 {
   public class FormMain : Form
   {
+    private AppConfig appConfig;
     private FlowLayoutPanel flowPanel;
     private Button btnRead;
     private FileInfo[] imageFiles = Array.Empty<FileInfo>();
@@ -11,6 +12,7 @@ namespace mangareader.Forms
     {
       Text = "Manga Reader";
       Size = new Size(1000, 700);
+      appConfig = ConfigManager.LoadSettings();
 
       var mainLayout = new TableLayoutPanel
       {
@@ -41,13 +43,13 @@ namespace mangareader.Forms
       };
       mainLayout.Controls.Add(flowPanel, 0, 1);
 
-      LoadImages(@"C:\YourDirectory");
+      LoadImages(appConfig.MangaRootDir);
     }
     private void LoadImages(string fileDirectory)
     {
-      DirectoryInfo d = new DirectoryInfo(fileDirectory);
+      DirectoryInfo d = new(fileDirectory);
       imageFiles = d.GetFiles("*.jpg")
-        .OrderBy(f => ExtractNumber(f.Name))
+        .OrderBy(f => Helper.ExtractNumber(f.Name))
         .ToArray();
 
       foreach (FileInfo file in imageFiles)
@@ -88,18 +90,12 @@ namespace mangareader.Forms
         flowPanel.Controls.Add(panel);
       }
     }
-    private int ExtractNumber(string fileName)
-    {
-      // Extract the first number from the filename
-      var match = Regex.Match(fileName, @"\d+");
-      return match.Success ? int.Parse(match.Value) : 0;
-    }
     private void BtnRead_click(object? sender, EventArgs e)
     {
       if (imageFiles == null || imageFiles.Length == 0)
       {
-          MessageBox.Show("No images found to read.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-          return;
+        MessageBox.Show("No images found to read.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return;
       }
 
       var readerForm = new FormRead(imageFiles);
