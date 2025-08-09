@@ -1,19 +1,69 @@
+using System.Diagnostics;
+
 namespace mangareader.Forms
 {
-  public class FormRead : Form
+  public class FormRead : UserControl
   {
-    private PictureBox pictureBox;
-    private Button prevButton;
-    private Button nextButton;
-    private FileInfo[] images;
+    private readonly PictureBox pictureBox;
+    private readonly Button btnPrev;
+    private readonly Button btnNext;
+    private readonly Button btnBack;
+    private FileInfo[]? images;
     private int currentIndex;
-    public FormRead(FileInfo[] imageFiles)
+    public event Action? BackReq;
+
+    // Functions /////////////////////
+    public void LoadImages(FileInfo[] imageFiles)
     {
       images = imageFiles;
       currentIndex = 0;
+      ShowPage(0);
+    }
+    private void ShowPage(int index)
+    {
+      if (images == null || index < 0 || index >= images.Length)
+        return;
 
-      Text = "Manga Reader - Page View";
-      WindowState = FormWindowState.Maximized;
+      currentIndex = index;
+
+      // Dispose old image to free memory
+      if (pictureBox.Image != null)
+      {
+        pictureBox.Image.Dispose();
+        pictureBox.Image = null;
+      }
+
+      pictureBox.Image = Image.FromFile(images[currentIndex].FullName);
+      // Text = $"Page {currentIndex + 1} / {images.Length} - {images[currentIndex].Name}";
+    }
+
+    // Event Handlers /////////////////////
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+      if (keyData == Keys.Left)
+      {
+        btnPrev.PerformClick();
+      }
+      else if (keyData == Keys.Right)
+      {
+        btnNext.PerformClick();
+      }
+      return true; // mark handled (prevent normal navigation)
+    }
+
+    // Views /////////////////////
+    public FormRead()
+    {
+      Dock = DockStyle.Fill;
+      Visible = false;
+
+      Debug.WriteLine($"Form Read");
+      this.KeyDown += (s, e) =>
+      {
+          Debug.WriteLine($"Key: {e.KeyCode}");
+      };
+
+      this.TabStop = true; // allow focus
 
       pictureBox = new PictureBox
       {
@@ -28,47 +78,35 @@ namespace mangareader.Forms
         Height = 50
       };
 
-      prevButton = new Button
+      btnPrev = new Button
       {
         Text = "Prev",
         Dock = DockStyle.Left,
         Width = 100
       };
-      prevButton.Click += (s, e) => ShowPage(currentIndex - 1);
+      btnPrev.Click += (s, e) => ShowPage(currentIndex - 1);
 
-      nextButton = new Button
+      btnNext = new Button
       {
         Text = "Next",
         Dock = DockStyle.Right,
         Width = 100
       };
-      nextButton.Click += (s, e) => ShowPage(currentIndex + 1);
+      btnNext.Click += (s, e) => ShowPage(currentIndex + 1);
 
-      buttonPanel.Controls.Add(prevButton);
-      buttonPanel.Controls.Add(nextButton);
+      btnBack = new Button
+      {
+        Text = "Back",
+        Dock = DockStyle.Fill
+      };
+      btnBack.Click += (s, e) => BackReq?.Invoke();
+
+      buttonPanel.Controls.Add(btnPrev);
+      buttonPanel.Controls.Add(btnNext);
+      buttonPanel.Controls.Add(btnBack);
 
       Controls.Add(pictureBox);
       Controls.Add(buttonPanel);
-
-      ShowPage(0);
-    }
-    
-    private void ShowPage(int index)
-    {
-      if (index < 0 || index >= images.Length)
-        return;
-
-      currentIndex = index;
-
-      // Dispose old image to free memory
-      if (pictureBox.Image != null)
-      {
-        pictureBox.Image.Dispose();
-        pictureBox.Image = null;
-      }
-
-      pictureBox.Image = Image.FromFile(images[currentIndex].FullName);
-      Text = $"Page {currentIndex + 1} / {images.Length} - {images[currentIndex].Name}";
     }
   }
 }

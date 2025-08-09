@@ -4,47 +4,14 @@ namespace mangareader.Forms
 {
   public class FormMain : Form
   {
-    private AppConfig appConfig;
-    private FlowLayoutPanel flowPanel;
-    private Button btnRead;
+    private readonly AppConfig appConfig;
     private FileInfo[] imageFiles = Array.Empty<FileInfo>();
-    public FormMain()
-    {
-      Text = "Manga Reader";
-      Size = new Size(1000, 700);
-      appConfig = ConfigManager.LoadSettings();
+    private readonly FlowLayoutPanel flowPanel;
+    private readonly Panel panelThumbnails;
+    private readonly FormRead formRead;
+    private readonly Button btnRead;
 
-      var mainLayout = new TableLayoutPanel
-      {
-          Dock = DockStyle.Fill,
-          RowCount = 2,
-          ColumnCount = 1
-      };
-      mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));
-      mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-      Controls.Add(mainLayout);
-
-      btnRead = new Button
-      {
-        Text = "Read",
-        Dock = DockStyle.Fill,
-        Height = 40
-      };
-      btnRead.Click += BtnRead_click;
-      mainLayout.Controls.Add(btnRead, 0, 0);
-
-      flowPanel = new FlowLayoutPanel()
-      {
-        Dock = DockStyle.Fill,
-        AutoScroll = true,
-        WrapContents = true,
-        FlowDirection = FlowDirection.LeftToRight,
-        Padding = new Padding(10)
-      };
-      mainLayout.Controls.Add(flowPanel, 0, 1);
-
-      LoadImages(appConfig.MangaRootDir);
-    }
+    // Functions /////////////////////
     private void LoadImages(string fileDirectory)
     {
       DirectoryInfo d = new(fileDirectory);
@@ -90,16 +57,72 @@ namespace mangareader.Forms
         flowPanel.Controls.Add(panel);
       }
     }
-    private void BtnRead_click(object? sender, EventArgs e)
-    {
-      if (imageFiles == null || imageFiles.Length == 0)
-      {
-        MessageBox.Show("No images found to read.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        return;
-      }
 
-      var readerForm = new FormRead(imageFiles);
-      readerForm.ShowDialog();
+    // Views /////////////////////
+    public FormMain()
+    {
+      Text = "Manga Reader";
+      Size = new Size(1000, 700);
+      appConfig = ConfigManager.LoadSettings();
+
+      panelThumbnails = new Panel();
+      btnRead = new Button();
+      flowPanel = new FlowLayoutPanel();
+      formRead = new FormRead();
+
+      InitPanelThumbnails();
+      InitPanelRead();
+      LoadImages(appConfig.MangaRootDir);
+
+      ToggleView("");
+    }
+    private void ToggleView(string state)
+    {
+      switch (state)
+      {
+        case "read":
+          panelThumbnails.Visible = false;
+          formRead.Visible = true;
+          formRead.Focus();
+          Text = "Manga Reader - Read";
+          break;
+        default:
+          panelThumbnails.Visible = true;
+          formRead.Visible = false;
+          Text = "Manga Reader - List";
+          break;
+      }
+    }
+
+    private void InitPanelThumbnails()
+    {
+      panelThumbnails.Dock = DockStyle.Fill;
+      panelThumbnails.Visible = false;
+
+      btnRead.Text = "Read";
+      btnRead.Dock = DockStyle.Top;
+      btnRead.Height = 40;
+      btnRead.Click += (s, e) =>
+      {
+        formRead.LoadImages(imageFiles);
+        ToggleView("read");
+      };
+
+      flowPanel.Dock = DockStyle.Fill;
+      flowPanel.AutoScroll = true;
+      flowPanel.WrapContents = true;
+      flowPanel.FlowDirection = FlowDirection.LeftToRight;
+      flowPanel.Padding = new Padding(10);
+        
+      panelThumbnails.Controls.Add(flowPanel);
+      panelThumbnails.Controls.Add(btnRead);
+      Controls.Add(panelThumbnails);
+    }
+
+    private void InitPanelRead()
+    {
+      formRead.BackReq += () => ToggleView("");
+      Controls.Add(formRead);
     }
   }
 }
