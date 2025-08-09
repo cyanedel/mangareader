@@ -1,5 +1,4 @@
 ﻿using mangareader.Forms;
-using System.Diagnostics;
 using System.Text.Json;
 
 namespace mangareader
@@ -22,7 +21,7 @@ class ConfigManager
   private static readonly string AppConfigFile = Path.Combine(AppContext.BaseDirectory, "appconfig.json");
   public static AppConfig LoadSettings()
   {
-    MessageBox.Show("Config:" + AppConfigFile);
+    // MessageBox.Show("Config:" + AppConfigFile);
     if (!File.Exists(AppConfigFile))
     {
       // Create default if missing

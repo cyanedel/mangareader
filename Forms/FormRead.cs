@@ -40,15 +40,16 @@ namespace mangareader.Forms
     // Event Handlers /////////////////////
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
-      if (keyData == Keys.Left)
+      switch (keyData)
       {
-        btnPrev.PerformClick();
+        case Keys.Left:
+          btnPrev.PerformClick();
+          return true;
+        case Keys.Right:
+          btnNext.PerformClick();
+          return true;
       }
-      else if (keyData == Keys.Right)
-      {
-        btnNext.PerformClick();
-      }
-      return true; // mark handled (prevent normal navigation)
+      return base.ProcessCmdKey(ref msg, keyData);
     }
 
     // Views /////////////////////
@@ -56,14 +57,9 @@ namespace mangareader.Forms
     {
       Dock = DockStyle.Fill;
       Visible = false;
-
-      Debug.WriteLine($"Form Read");
-      this.KeyDown += (s, e) =>
-      {
-          Debug.WriteLine($"Key: {e.KeyCode}");
-      };
-
-      this.TabStop = true; // allow focus
+      
+      this.KeyDown += (s, e) => { };
+      this.TabStop = true;
 
       pictureBox = new PictureBox
       {
