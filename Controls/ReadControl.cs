@@ -1,15 +1,15 @@
 using System.Diagnostics;
 
-namespace mangareader.Forms
+namespace mangareader.Controls
 {
-	public class FormRead : UserControl
+	public class ReadControl : UserControl
 	{
 		private readonly PictureBox pictureBox;
 		private readonly Button btnPrev;
 		private readonly Button btnNext;
 		private readonly Button btnBack;
 		private FileInfo[]? images;
-		private List<(string name, byte[] imageData)> imagesMem;
+		private List<(string name, byte[] imageData)>? imagesMem;
 		private int currentIndex;
 		public event Action? BackReq;
 		private bool isMemory = false;
@@ -18,6 +18,8 @@ namespace mangareader.Forms
 		//private const float zoomStep = 0.1f;
 		//private const float maxZoom = 3.0f;
 		//private const float minZoom = 0.5f;
+
+		// Events
 
 		// Functions /////////////////////
 		public void LoadImages(FileInfo[] imageFiles)
@@ -105,7 +107,7 @@ namespace mangareader.Forms
 		}
 
 		// Views /////////////////////
-		public FormRead()
+		public ReadControl()
 		{
 			Dock = DockStyle.Fill;
 			Visible = false;

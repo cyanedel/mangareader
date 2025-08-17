@@ -1,33 +1,22 @@
+using mangareader.Controls;
 using mangareader.Utils;
-using System.IO;
 using System.IO.Compression;
 
 namespace mangareader.Forms
 {
-	public class FormMain : Form
+	public class MainForm : Form
 	{
 		private readonly AppConfig appConfig;
-		private bool isArchive = false;
 		private FileInfo[] imageFiles = Array.Empty<FileInfo>();
 		private List<(string name, byte[] imageData)> imageFilesMem;
 		private readonly FlowLayoutPanel flowPanel;
+		private readonly Panel panelReadLists;
 		private readonly Panel panelThumbnails;
-		private readonly FormRead formRead;
+		private readonly ReadControl formRead;
+		private readonly PreviewControl previewControl;
 		private readonly Button btnRead;
 
 		// Functions /////////////////////
-		// private void LoadImages(string fileDirectory)
-		// {
-		// 	if (Directory.Exists(fileDirectory))
-		// 	{
-		// 		//var files = LoadFromDirectory(path);
-		// 		// Pass file paths to your image viewer
-		// 		DirectoryInfo d = new(fileDirectory);
-		// 		imageFiles = d.GetFiles("*.jpg")
-		// 			.OrderBy(f => Helper.ExtractNumber(f.Name))
-		// 			.ToArray();
-		// 	}
-		// }
 		private void LoadImages(string filePath)
 		{
 			DirectoryInfo d = new(filePath);
@@ -83,6 +72,7 @@ namespace mangareader.Forms
 				if (filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
 				{
 					imageFilesMem = LoadImagesFromZipToMemory(filePath);
+					FirstImage(imageFilesMem[0]);
 					foreach (var imageItem in imageFilesMem)
           {
             Image thumb;
@@ -129,7 +119,7 @@ namespace mangareader.Forms
 				//}
 			}
 		}
-		List<(string name, byte[] imageData)> LoadImagesFromZipToMemory(string zipPath)
+		private List<(string name, byte[] imageData)> LoadImagesFromZipToMemory(string zipPath)
 		{
 			var images = new List<(string, byte[])>();
 
@@ -152,9 +142,50 @@ namespace mangareader.Forms
 			}
 			return images;
 		}
+		private void FirstImage((string name, byte[] imageData) coverMem)
+		{
+			Image thumb;
+			using (var ms = new MemoryStream(coverMem.imageData))
+			using (var img = Image.FromStream(ms))
+			{
+				thumb = new Bitmap(img, new Size(150, 200));
+			}
+
+			var panel = new Panel
+			{
+				Width = 170,
+				Height = 240,
+				Margin = new Padding(8),
+				BorderStyle = BorderStyle.FixedSingle,
+			};
+			panel.Click += (s, e) => { ToggleView("read"); };
+
+			var pictureBox = new PictureBox
+			{
+				Image = thumb,
+				SizeMode = PictureBoxSizeMode.Zoom,
+				Location = new Point(5, 5),
+				Size = new Size(160, 200)
+			};
+			pictureBox.Click += (s, e) => { ToggleView("read"); };
+
+			var label = new Label
+			{
+				Text = "Book Title",
+				Location = new Point(5, 210),
+				Width = 160,
+				Height = 20,
+				TextAlign = ContentAlignment.MiddleCenter
+			};
+			label.Click += (s, e) => { ToggleView("read"); };
+
+			panel.Controls.Add(pictureBox);
+			panel.Controls.Add(label);
+			flowPanel.Controls.Add(panel);
+		}
 
 		// Views /////////////////////
-		public FormMain()
+		public MainForm()
 		{
 			Text = "Manga Reader";
 			Size = new Size(1000, 700);
@@ -163,20 +194,41 @@ namespace mangareader.Forms
 			panelThumbnails = new Panel();
 			btnRead = new Button();
 			flowPanel = new FlowLayoutPanel();
-			formRead = new FormRead();
+			formRead = new ReadControl();
+			previewControl = new PreviewControl() {
+				Dock = DockStyle.Fill,
+			};
+			panelReadLists = new Panel() {
+				Dock = DockStyle.Top,
+				Height = 40
+			};
+			previewControl.BookReadEvent += (s, e) => {
+				if (e.imageFileList is List<(string name, byte[] imageData)>) {
+					this.imageFilesMem = e.imageFileList;
+					MessageBox.Show("Is List");
+					formRead.LoadImages(this.imageFilesMem);
+					ToggleView("read");
+				} else if (e.imageFIArray is FileInfo[]) {
+					this.imageFiles = e.imageFIArray;
+					MessageBox.Show("Is Array");
+					formRead.LoadImages(this.imageFiles);
+					ToggleView("read");
+				}
+			};
 
 			InitPanelThumbnails();
 			InitPanelRead();
+			InitPanelReadList();
+			Controls.Add(previewControl);
+			Controls.Add(panelThumbnails);
 
 			var filePath = appConfig.MangaRootDir;
 			if (Directory.Exists(filePath))
 			{
-				isArchive = false;
 				LoadImages(filePath);
 			}
 			else if (File.Exists(filePath) && Helper.IsArchive(filePath))
 			{
-				isArchive = true;
 				if (filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
 				{
 					LoadArchivedImages(filePath);
@@ -189,7 +241,7 @@ namespace mangareader.Forms
 
 			ToggleView("");
 		}
-		private void ToggleView(string state)
+		public void ToggleView(string state)
 		{
 			switch (state)
 			{
@@ -215,18 +267,7 @@ namespace mangareader.Forms
 			btnRead.Text = "Read";
 			btnRead.Dock = DockStyle.Top;
 			btnRead.Height = 40;
-			btnRead.Click += (s, e) =>
-			{
-				if (imageFilesMem.Count > 0)
-				{
-					formRead.LoadImages(imageFilesMem);
-				}
-				else
-				{
-					formRead.LoadImages(imageFiles);
-				}
-				ToggleView("read");
-			};
+			btnRead.Click += (s, e) => { ToggleView("read"); };
 
 			flowPanel.Dock = DockStyle.Fill;
 			flowPanel.AutoScroll = true;
@@ -236,13 +277,37 @@ namespace mangareader.Forms
 				
 			panelThumbnails.Controls.Add(flowPanel);
 			panelThumbnails.Controls.Add(btnRead);
-			Controls.Add(panelThumbnails);
 		}
 
 		private void InitPanelRead()
 		{
 			formRead.BackReq += () => ToggleView("");
 			Controls.Add(formRead);
+		}
+		private void InitPanelReadList()
+		{
+			string[] buttonLabels = { "Button 1", "Button 2", "Button 3" };
+			int buttonWidth = panelReadLists.ClientSize.Width / buttonLabels.Length;
+
+			for (int i = 0; i < buttonLabels.Length; i++)
+			{
+				Button btn = new Button();
+				btn.Text = buttonLabels[i];
+				btn.Height = panelReadLists.Height;
+				btn.Width = buttonWidth;
+				btn.Left = i * buttonWidth;
+				btn.Top = 0;
+
+				// Example click event
+				btn.Click += (sender, e) =>
+				{
+					MessageBox.Show($"{((Button)sender).Text} clicked!");
+				};
+
+				// Add to form
+				panelReadLists.Controls.Add(btn);
+			}
+			panelThumbnails.Controls.Add(panelReadLists);
 		}
 	}
 }
