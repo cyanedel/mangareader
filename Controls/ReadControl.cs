@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace mangareader.Controls
 {
 	public class ReadControl : UserControl

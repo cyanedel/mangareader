@@ -205,12 +205,10 @@ namespace mangareader.Forms
 			previewControl.BookReadEvent += (s, e) => {
 				if (e.imageFileList is List<(string name, byte[] imageData)>) {
 					this.imageFilesMem = e.imageFileList;
-					MessageBox.Show("Is List");
 					formRead.LoadImages(this.imageFilesMem);
 					ToggleView("read");
 				} else if (e.imageFIArray is FileInfo[]) {
 					this.imageFiles = e.imageFIArray;
-					MessageBox.Show("Is Array");
 					formRead.LoadImages(this.imageFiles);
 					ToggleView("read");
 				}
